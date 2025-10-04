@@ -1,0 +1,22 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS [Unit] (
+    [id] INTEGER PRIMARY KEY AUTOINCREMENT,
+    [name] TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS [Timing] (
+    [id] INTEGER PRIMARY KEY AUTOINCREMENT,
+    [date] TEXT NOT NULL,
+    [time] TEXT NOT NULL,
+    [description] TEXT,
+    [union_id] INTEGER NOT NULL,
+    [group_id] INTEGER,
+    [FOREIGN KEY] (union_id) REFERENCES [Unit](id) ON DELETE CASCADE
+    [FOREIGN KEY] (group_id) REFERENCES [Grop](id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS [Group] (
+    [id] INTEGER PRIMARY KEY AUTOINCREMENT,
+    [group_name] TEXT NOT NULL
+);
