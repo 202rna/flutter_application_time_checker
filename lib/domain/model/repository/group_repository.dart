@@ -1,7 +1,7 @@
-import 'package:flutter_application_time_checker/domain/model/timing.dart';
+import 'package:flutter_application_time_checker/domain/model/group.dart';
 
 abstract class GroupRepository {
-  Future<Timing> getGroup({
+  Future<Group> getGroup({
     required int id,
   });
 }
