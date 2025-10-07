@@ -1,6 +1,7 @@
 import 'package:flutter_application_time_checker/domain/model/db_model.dart';
 
 class Unit implements DbModel {
+  @override
   final int? id;
   final String name;
 
@@ -17,7 +18,5 @@ class Unit implements DbModel {
   }
 }
 
-Unit _$GroupFromMap(Map<String, dynamic> map) => Unit(
-      id: map['id'],
-      name: map['name'],
-    );
+Unit _$GroupFromMap(Map<String, dynamic> map) =>
+    Unit(id: map['id'], name: map['name']);
