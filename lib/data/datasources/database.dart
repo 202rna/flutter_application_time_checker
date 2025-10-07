@@ -20,6 +20,8 @@ class DB {
 
       var path = join(databasePath, "db_v1.0.0.db");
 
+      await deleteDatabase(path);
+
       _db = await openDatabase(path,
           version: 1, onConfigure: _onConfigure, onCreate: _createDB);
       _isInitialized = true;
@@ -35,9 +37,9 @@ class DB {
     await db.execute('''
     CREATE TABLE IF NOT EXISTS [Group] (
       [id] INTEGER PRIMARY KEY AUTOINCREMENT,
-      [groupName] TEXT NOT NULL,
+      [name] TEXT NOT NULL,
       [unitId] INTEGER NOT NULL,
-      FOREIGN KEY ([unitId]) REFERENCES [Unit]([id]) ON DELETE CASCADE,
+      FOREIGN KEY ([unitId]) REFERENCES [Unit]([id]) ON DELETE CASCADE
     )
   ''');
 

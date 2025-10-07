@@ -6,14 +6,14 @@ class Timing implements DbModel {
   final DateTime date;
   final String time;
   final String? description;
-  final int unitId;
+  final int? groupId;
 
   const Timing({
     this.id,
     required this.date,
     required this.time,
     this.description,
-    required this.unitId,
+    required this.groupId,
   });
 
   factory Timing.fromMap(Map<String, dynamic> map) => _$GroupFromMap(map);
@@ -24,8 +24,8 @@ class Timing implements DbModel {
       'id': id,
       'date': date.toIso8601String(), // DateTime в строку
       'time': time, // Duration в секунды (или другой формат)
-      'notes': description,
-      'unit_id': unitId,
+      'description': description,
+      'groupId': groupId,
     };
   }
 }
@@ -34,6 +34,6 @@ Timing _$GroupFromMap(Map<String, dynamic> map) => Timing(
       id: map['id'],
       date: DateTime.parse(map['date']),
       time: map['time'],
-      description: map['notes'],
-      unitId: map['unit_id'],
+      description: map['description'],
+      groupId: map['groupId'],
     );

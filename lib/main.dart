@@ -7,6 +7,7 @@ import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/domain/model/timing.dart';
 import 'package:flutter_application_time_checker/domain/model/unit.dart';
 import 'package:flutter_application_time_checker/domain/model/db_model.dart';
+import 'package:flutter_application_time_checker/internal/application.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,7 @@ void main() async {
   }
 
   await DB.instance.init();
-  runApp(const MyApp());
+  runApp(const Application());
 }
 
 class MyApp extends StatelessWidget {
@@ -71,10 +72,8 @@ class _HomeState extends State<Home> {
         isLoading = false; // Загрузка завершена
       });
     } catch (e) {
-      // Обработка ошибок (например, логирование или показ Snackbar)
-      print('Ошибка инициализации: $e');
       setState(() {
-        isLoading = false; // Даже при ошибке прекращаем загрузку
+        isLoading = false;
       });
     }
   }
