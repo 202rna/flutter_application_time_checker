@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_time_checker/data/datasources/database.dart';
 import 'package:flutter_application_time_checker/domain/model/unit.dart';
-import 'package:flutter_application_time_checker/domain/model/group.dart';
-import 'package:flutter_application_time_checker/domain/model/timing.dart';
+import 'package:flutter_application_time_checker/presentation/page/group_screen.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
 
   @override
-  _HomeState createState() => _HomeState();
+  HomeState createState() => HomeState();
 }
 
-class _HomeState extends State<Home> {
+class HomeState extends State<Home> {
   late Map<String, Unit> units = {};
   bool isLoading = true;
 
@@ -41,19 +40,19 @@ class _HomeState extends State<Home> {
     final String? name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Добавить Unit'),
+        title: const Text('Добавить Unit'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(labelText: 'Название Unit'),
+          decoration: const InputDecoration(labelText: 'Название Unit'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Добавить'),
+            child: const Text('Добавить'),
           ),
         ],
       ),
@@ -71,17 +70,17 @@ class _HomeState extends State<Home> {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Удалить Unit?'),
-        content: Text(
+        title: const Text('Удалить Unit?'),
+        content: const Text(
             'Это действие нельзя отменить. Удалить Unit и все связанные Groups и Timings?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Удалить'),
+            child: const Text('Удалить'),
           ),
         ],
       ),
@@ -93,14 +92,18 @@ class _HomeState extends State<Home> {
         if (unit != null) {
           await DB.instance.delete<Unit>(unit);
           _loadUnits();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Unit удалён')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unit удалён')),
+            );
+          }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка удаления: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ошибка удаления: $e')),
+          );
+        }
       }
     }
   }
@@ -109,8 +112,8 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Units')),
-        body: Center(child: CircularProgressIndicator()),
+        appBar: AppBar(title: const Text('Units')),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -119,7 +122,7 @@ class _HomeState extends State<Home> {
         title: const Text('Units'),
       ),
       body: units.isEmpty
-          ? Center(child: Text('Нет units'))
+          ? const Center(child: Text('Нет записей'))
           : ListView.builder(
               itemCount: units.length,
               itemBuilder: (context, index) {
@@ -128,7 +131,7 @@ class _HomeState extends State<Home> {
                 return ListTile(
                   title: Text(unit.name),
                   trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _deleteUnit(unit.id),
                     tooltip: 'Удалить Unit',
                   ),
@@ -146,392 +149,8 @@ class _HomeState extends State<Home> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addUnit,
-        child: Icon(Icons.add),
         tooltip: 'Добавить Unit',
-      ),
-    );
-  }
-}
-
-// Экран групп для выбранного unit
-class GroupsScreen extends StatefulWidget {
-  final Unit unit;
-
-  const GroupsScreen({super.key, required this.unit});
-
-  @override
-  _GroupsScreenState createState() => _GroupsScreenState();
-}
-
-class _GroupsScreenState extends State<GroupsScreen> {
-  late Map<String, Group> groups = {};
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadGroups();
-  }
-
-  Future<void> _loadGroups() async {
-    try {
-      // Предполагаем, что getAll<Group>() возвращает все группы, и мы фильтруем по unitId
-      // Если Group имеет поле unitId (int или String), фильтруем
-      final groupsIterable = await DB.instance.getAll<Group>();
-      groups = Map.fromIterable(
-        groupsIterable.where((g) =>
-            (g as Group).unitId ==
-            widget.unit.id), // Предполагаем, что Group имеет unitId
-        key: (g) => (g as Group).id.toString(),
-      );
-      setState(() {
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Ошибка загрузки групп: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _addGroup() async {
-    final TextEditingController controller = TextEditingController();
-    final String? name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Добавить Group'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: 'Название Group'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Добавить'),
-          ),
-        ],
-      ),
-    );
-
-    if (name != null && name.isNotEmpty) {
-      final newGroup = Group(name: name, unitId: widget.unit.id);
-      await DB.instance.insert<Group>(newGroup);
-      _loadGroups();
-    }
-  }
-
-  Future<void> _deleteGroup(int? id) async {
-    if (id == null) return; // Если id null, не удаляем
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Удалить Group?'),
-        content: Text(
-            'Это действие нельзя отменить. Удалить Group и все связанные Timings?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Удалить'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      try {
-        final group = groups[id.toString()];
-        if (group != null) {
-          await DB.instance.delete<Group>(group);
-          _loadGroups();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Group удалён')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка удаления: $e')),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: Text('Группы для ${widget.unit.name}')),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Группы для ${widget.unit.name}'),
-      ),
-      body: groups.isEmpty
-          ? Center(child: Text('Нет групп'))
-          : ListView.builder(
-              itemCount: groups.length,
-              itemBuilder: (context, index) {
-                final groupKey = groups.keys.elementAt(index);
-                final group = groups[groupKey]!;
-                return ListTile(
-                  title: Text(group.name),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteGroup(group.id),
-                    tooltip: 'Удалить Group',
-                  ),
-                  onTap: () {
-                    // Переход к timing для этой группы
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TimingsScreen(group: group),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addGroup,
-        child: Icon(Icons.add),
-        tooltip: 'Добавить Group',
-      ),
-    );
-  }
-}
-
-// Экран timing для выбранной группы
-class TimingsScreen extends StatefulWidget {
-  final Group group;
-
-  const TimingsScreen({super.key, required this.group});
-
-  @override
-  _TimingsScreenState createState() => _TimingsScreenState();
-}
-
-class _TimingsScreenState extends State<TimingsScreen> {
-  late Map<String, Timing> timings = {};
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTimings();
-  }
-
-  Future<void> _loadTimings() async {
-    try {
-      // Фильтруем по groupId, предполагая, что Timing имеет поле groupId (FK на Group)
-      final timingsIterable = await DB.instance.getAll<Timing>();
-      timings = Map.fromIterable(
-        timingsIterable.where((t) =>
-            (t as Timing).groupId ==
-            widget.group
-                .id), // Исправлено: groupId вместо unitId, и widget.group.id
-        key: (t) => (t as Timing).id.toString(),
-      );
-      setState(() {
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Ошибка загрузки timing: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _addTiming() async {
-    final TextEditingController dateController = TextEditingController();
-    final TextEditingController timeControllerMM = TextEditingController();
-    final TextEditingController timeControllerSS = TextEditingController();
-    final TextEditingController timeControllerMMM = TextEditingController();
-    final TextEditingController descriptionController = TextEditingController();
-
-    try {
-      final result = await showDialog<Map<String, dynamic>>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Добавить Timing'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: timeControllerMM,
-                      decoration: InputDecoration(labelText: 'MM'),
-                      maxLength: 2,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: timeControllerSS,
-                      decoration: InputDecoration(labelText: 'SS'),
-                      maxLength: 2,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: timeControllerMMM,
-                      decoration: InputDecoration(labelText: 'mmm'),
-                      maxLength: 3,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration:
-                    InputDecoration(labelText: 'Описание (опционально)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Отмена'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (timeControllerMM.text.isEmpty) timeControllerMM.text = '00';
-                if (timeControllerSS.text.isEmpty) timeControllerSS.text = '00';
-                if (timeControllerMMM.text.isEmpty)
-                  timeControllerMMM.text = '000';
-
-                Navigator.of(context).pop({
-                  'date': DateTime.now(),
-                  'time':
-                      '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
-                  'description': descriptionController.text,
-                });
-              },
-              child: Text('Добавить'),
-            ),
-          ],
-        ),
-      );
-
-      dateController.dispose();
-      timeControllerMM.dispose();
-      timeControllerSS.dispose();
-      timeControllerMMM.dispose();
-      descriptionController.dispose();
-
-      if (result != null) {
-        final newTiming = Timing(
-          id: null,
-          date: result['date'] as DateTime,
-          time: result['time'] as String,
-          description: (result['description'] as String).isNotEmpty
-              ? result['description'] as String
-              : null,
-          groupId: widget.group.id,
-        );
-        await DB.instance.insert<Timing>(newTiming);
-        _loadTimings(); // Перезагрузка
-      }
-    } catch (e) {
-      // Обработка ошибок (например, проблемы с БД или диалогом)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
-      );
-    }
-  }
-
-  Future<void> _deleteTiming(int? id) async {
-    if (id == null) return; // Если id null, не удаляем
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Удалить Timing?'),
-        content: Text('Это действие нельзя отменить.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Удалить'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      try {
-        final timing = timings[id.toString()];
-        if (timing != null) {
-          await DB.instance.delete<Timing>(timing);
-          _loadTimings();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Timing удалён')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка удаления: $e')),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: Text('Время для ${widget.group.name}')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Время для ${widget.group.name}'),
-      ),
-      body: timings.isEmpty
-          ? Center(child: Text('Нет записей'))
-          : ListView.builder(
-              itemCount: timings.length,
-              itemBuilder: (context, index) {
-                final timingKey = timings.keys.elementAt(index);
-                final timing = timings[timingKey]!;
-                return ListTile(
-                  title: Text(
-                      'Дата: ${timing.date.toLocal().toString().split(' ')[0]}, Время: ${timing.time}'),
-                  subtitle: Text(timing.description ?? ''),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteTiming(timing.id),
-                    tooltip: 'Удалить Timing',
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addTiming,
-        child: Icon(Icons.add),
-        tooltip: 'Добавить Timing',
+        child: const Icon(Icons.add),
       ),
     );
   }
