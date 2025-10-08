@@ -9,7 +9,8 @@ class Application extends StatelessWidget {
     return MaterialApp(
       title: 'Save Timings',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        fontFamily: 'Berlin',
+        primarySwatch: Colors.indigo,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const Home(),

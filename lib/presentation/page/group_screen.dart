@@ -3,6 +3,7 @@ import 'package:flutter_application_time_checker/data/datasources/database.dart'
 import 'package:flutter_application_time_checker/domain/model/unit.dart';
 import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/presentation/page/timings_screen.dart';
+import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
 
 class GroupsScreen extends StatefulWidget {
   final Unit unit;
@@ -29,14 +30,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
       // Если Group имеет поле unitId (int или String), фильтруем
       final groupsIterable = await DB.instance.getAll<Group>();
       groups = Map.fromIterable(
-        groupsIterable.where((g) => (g as Group).unitId == widget.unit.id),
+        groupsIterable.where((g) => (g).unitId == widget.unit.id),
         key: (g) => (g as Group).id.toString(),
       );
       setState(() {
         isLoading = false;
       });
     } catch (e) {
-      print('Ошибка загрузки групп: $e');
       setState(() {
         isLoading = false;
       });
@@ -48,19 +48,24 @@ class _GroupsScreenState extends State<GroupsScreen> {
     final String? name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Добавить Group'),
+        //title: const Text('Добавить группу'),
         content: TextField(
           controller: controller,
-          decoration: InputDecoration(labelText: 'Название Group'),
+          decoration: const InputDecoration(labelText: 'Название группы'),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text('Добавить'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: const Text('Добавить'),
+              ),
+            ],
           ),
         ],
       ),
@@ -74,21 +79,21 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _deleteGroup(int? id) async {
-    if (id == null) return; // Если id null, не удаляем
+    if (id == null) return;
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Удалить Group?'),
-        content: Text(
-            'Это действие нельзя отменить. Удалить Group и все связанные Timings?'),
+        title: const Text('Удалить запись'),
+        content: const Text(
+            'Это действие нельзя отменить. Удалить группу и все связанные результаты ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Отмена'),
+            child: const Text('Отмена'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Удалить'),
+            child: const Text('Удалить'),
           ),
         ],
       ),
@@ -100,14 +105,18 @@ class _GroupsScreenState extends State<GroupsScreen> {
         if (group != null) {
           await DB.instance.delete<Group>(group);
           _loadGroups();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Group удалён')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Группа удалёна')),
+            );
+          }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка удаления: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ошибка удаления: $e')),
+          );
+        }
       }
     }
   }
@@ -116,17 +125,21 @@ class _GroupsScreenState extends State<GroupsScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Группы для ${widget.unit.name}')),
-        body: Center(child: CircularProgressIndicator()),
+        appBar: GradientAppBar(
+          title: widget.unit.name,
+          fs: 20,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Группы для ${widget.unit.name}'),
+      appBar: GradientAppBar(
+        title: widget.unit.name,
+        fs: 20,
       ),
       body: groups.isEmpty
-          ? Center(child: Text('Нет групп'))
+          ? const Center(child: Text('Нет групп'))
           : ListView.builder(
               itemCount: groups.length,
               itemBuilder: (context, index) {
@@ -135,12 +148,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 return ListTile(
                   title: Text(group.name),
                   trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _deleteGroup(group.id),
-                    tooltip: 'Удалить Group',
+                    tooltip: 'Удалить группу',
                   ),
                   onTap: () {
-                    // Переход к timing для этой группы
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -153,8 +165,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addGroup,
-        child: Icon(Icons.add),
-        tooltip: 'Добавить Group',
+        tooltip: 'Добавить группу',
+        child: const Icon(Icons.add),
       ),
     );
   }

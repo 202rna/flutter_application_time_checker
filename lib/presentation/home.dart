@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_time_checker/data/datasources/database.dart';
 import 'package:flutter_application_time_checker/domain/model/unit.dart';
 import 'package:flutter_application_time_checker/presentation/page/group_screen.dart';
+import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
+import 'package:flutter_application_time_checker/presentation/widget/home_list.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -40,19 +42,23 @@ class HomeState extends State<Home> {
     final String? name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Добавить Unit'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: 'Название Unit'),
+          decoration: const InputDecoration(labelText: 'ФИО'),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Добавить'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: const Text('Добавить'),
+              ),
+            ],
           ),
         ],
       ),
@@ -61,7 +67,7 @@ class HomeState extends State<Home> {
     if (name != null && name.isNotEmpty) {
       final newUnit = Unit(name: name);
       await DB.instance.insert<Unit>(newUnit);
-      _loadUnits(); // Перезагрузка списка
+      _loadUnits();
     }
   }
 
@@ -70,9 +76,9 @@ class HomeState extends State<Home> {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Удалить Unit?'),
+        title: const Text('Удалить запись'),
         content: const Text(
-            'Это действие нельзя отменить. Удалить Unit и все связанные Groups и Timings?'),
+            'Это действие нельзя отменить. Удалить запись и все связанные группы и результаты ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -94,7 +100,7 @@ class HomeState extends State<Home> {
           _loadUnits();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Unit удалён')),
+              const SnackBar(content: Text('Запись удалена')),
             );
           }
         }
@@ -118,39 +124,62 @@ class HomeState extends State<Home> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Units'),
-      ),
+      appBar: const GradientAppBar(title: 'СПИСОК'),
       body: units.isEmpty
-          ? const Center(child: Text('Нет записей'))
-          : ListView.builder(
-              itemCount: units.length,
-              itemBuilder: (context, index) {
-                final unitKey = units.keys.elementAt(index);
-                final unit = units[unitKey]!;
-                return ListTile(
-                  title: Text(unit.name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteUnit(unit.id),
-                    tooltip: 'Удалить Unit',
+          ? const Center(
+              child: Text(
+              'Нет записей',
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ))
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 5.0),
+                  SportyList(
+                    items: units.values
+                        .map((unit) =>
+                            ListItem(id: unit.id.toString(), name: unit.name))
+                        .toList(),
+                    onItemTap: (item) {
+                      final unit = units[item.id];
+                      if (unit != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GroupsScreen(unit: unit),
+                          ),
+                        );
+                      }
+                    },
+                    onDelete: (id) => _deleteUnit(int.tryParse(id)),
                   ),
-                  onTap: () {
-                    // Переход к группам для этого unit
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GroupsScreen(unit: unit),
-                      ),
-                    );
-                  },
-                );
-              },
+                  const SizedBox(height: 16.0),
+                ],
+              ),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addUnit,
-        tooltip: 'Добавить Unit',
-        child: const Icon(Icons.add),
+        backgroundColor: const Color.fromARGB(0, 204, 23, 23),
+        elevation: 8,
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Colors.blue, Colors.indigo],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: const Icon(
+            Icons.add,
+            color: Color.fromARGB(255, 236, 15, 15),
+            size: 28,
+          ),
+        ),
       ),
     );
   }

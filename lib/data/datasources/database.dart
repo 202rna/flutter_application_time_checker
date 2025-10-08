@@ -20,8 +20,6 @@ class DB {
 
       var path = join(databasePath, "db_v1.0.0.db");
 
-      await deleteDatabase(path);
-
       _db = await openDatabase(path,
           version: 1, onConfigure: _onConfigure, onCreate: _createDB);
       _isInitialized = true;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_time_checker/data/datasources/database.dart';
 import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/domain/model/timing.dart';
+import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
 
 class TimingsScreen extends StatefulWidget {
   final Group group;
@@ -27,17 +28,13 @@ class TimingsScreenState extends State<TimingsScreen> {
       // Фильтруем по groupId, предполагая, что Timing имеет поле groupId (FK на Group)
       final timingsIterable = await DB.instance.getAll<Timing>();
       timings = Map.fromIterable(
-        timingsIterable.where((t) =>
-            (t as Timing).groupId ==
-            widget.group
-                .id), // Исправлено: groupId вместо unitId, и widget.group.id
+        timingsIterable.where((t) => (t).groupId == widget.group.id),
         key: (t) => (t as Timing).id.toString(),
       );
       setState(() {
         isLoading = false;
       });
     } catch (e) {
-      print('Ошибка загрузки timing: $e');
       setState(() {
         isLoading = false;
       });
@@ -55,7 +52,7 @@ class TimingsScreenState extends State<TimingsScreen> {
       final result = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Добавить Timing'),
+          title: const Text('Добавить время'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -91,32 +88,40 @@ class TimingsScreenState extends State<TimingsScreen> {
               ),
               TextField(
                 controller: descriptionController,
-                decoration:
-                    const InputDecoration(labelText: 'Описание (опционально)'),
+                decoration: const InputDecoration(labelText: 'Заметки'),
               ),
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Отмена'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (timeControllerMM.text.isEmpty) timeControllerMM.text = '00';
-                if (timeControllerSS.text.isEmpty) timeControllerSS.text = '00';
-                if (timeControllerMMM.text.isEmpty) {
-                  timeControllerMMM.text = '000';
-                }
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Отмена'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (timeControllerMM.text.isEmpty) {
+                      timeControllerMM.text = '00';
+                    }
+                    if (timeControllerSS.text.isEmpty) {
+                      timeControllerSS.text = '00';
+                    }
+                    if (timeControllerMMM.text.isEmpty) {
+                      timeControllerMMM.text = '000';
+                    }
 
-                Navigator.of(context).pop({
-                  'date': DateTime.now(),
-                  'time':
-                      '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
-                  'description': descriptionController.text,
-                });
-              },
-              child: const Text('Добавить'),
+                    Navigator.of(context).pop({
+                      'date': DateTime.now(),
+                      'time':
+                          '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
+                      'description': descriptionController.text,
+                    });
+                  },
+                  child: const Text('Добавить'),
+                ),
+              ],
             ),
           ],
         ),
@@ -155,13 +160,14 @@ class TimingsScreenState extends State<TimingsScreen> {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Удалить Timing?'),
-        content: const Text('Это действие нельзя отменить.'),
+        title: const Text('Удалить время ?'),
+        content: const Text('Это действие нельзя отменить'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Отмена'),
           ),
+          const Spacer(),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Удалить'),
@@ -178,14 +184,16 @@ class TimingsScreenState extends State<TimingsScreen> {
           _loadTimings();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Timing удалён')),
+              const SnackBar(content: Text('Время удалено')),
             );
           }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка удаления: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ошибка удаления: $e')),
+          );
+        }
       }
     }
   }
@@ -194,38 +202,44 @@ class TimingsScreenState extends State<TimingsScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('Время для ${widget.group.name}')),
+        appBar: GradientAppBar(title: widget.group.name),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Время для ${widget.group.name}'),
-      ),
+      appBar: GradientAppBar(title: widget.group.name),
       body: timings.isEmpty
           ? const Center(child: Text('Нет записей'))
           : ListView.builder(
               itemCount: timings.length,
               itemBuilder: (context, index) {
-                final timingKey = timings.keys.elementAt(index);
+                // Получаем перевернутый список ключей (последний добавленный — первый)
+                final reversedKeys = timings.keys.toList().reversed.toList();
+                final timingKey = reversedKeys[index];
                 final timing = timings[timingKey]!;
                 return ListTile(
-                  title: Text(
-                      'Дата: ${timing.date.toLocal().toString().split(' ')[0]}, Время: ${timing.time}'),
+                  title: Wrap(
+                    spacing: 18.0,
+                    children: [
+                      Text(
+                          'Дата: ${timing.date.toLocal().toString().split(' ')[0]}'),
+                      Text("Время: ${timing.time}"),
+                    ],
+                  ),
                   subtitle: Text(timing.description ?? ''),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _deleteTiming(timing.id),
-                    tooltip: 'Удалить Timing',
+                    tooltip: 'Удалить время',
                   ),
                 );
               },
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTiming,
+        tooltip: 'Добавить время',
         child: const Icon(Icons.add),
-        tooltip: 'Добавить Timing',
       ),
     );
   }
