@@ -39,6 +39,7 @@ dependencies:
   json_annotation: ^4.9.0
   sqflite_common_ffi: ^2.3.4+4
   fl_chart: ^0.71.0
+  async: ^2.13.0
 
 dev_dependencies:
   flutter_test:

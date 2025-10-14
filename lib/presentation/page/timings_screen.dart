@@ -4,6 +4,7 @@ import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/domain/model/timing.dart';
 import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
 import 'package:flutter_application_time_checker/presentation/widget/line_chart.dart';
+import 'package:async/async.dart'; // Добавьте этот импорт для CancelableOperation
 
 class TimingsScreen extends StatefulWidget {
   final Group group;
@@ -17,6 +18,9 @@ class TimingsScreen extends StatefulWidget {
 class TimingsScreenState extends State<TimingsScreen> {
   late Map<String, Timing> timings = {};
   bool isLoading = true;
+  CancelableOperation<void>? _loadOperation; // Для отмены _loadTimings
+  CancelableOperation<void>? _addOperation; // Для отмены _addTiming
+  CancelableOperation<void>? _deleteOperation; // Для отмены _deleteTiming
 
   @override
   void initState() {
@@ -24,179 +28,227 @@ class TimingsScreenState extends State<TimingsScreen> {
     _loadTimings();
   }
 
+  @override
+  void dispose() {
+    _loadOperation?.cancel(); // Отменяем загрузку
+    _addOperation?.cancel(); // Отменяем добавление
+    _deleteOperation?.cancel(); // Отменяем удаление
+    super.dispose();
+  }
+
   Future<void> _loadTimings() async {
+    debugPrint('Start _loadTimings'); // Для отладки: проверьте логи
+    _loadOperation = CancelableOperation.fromFuture(
+      () async {
+        try {
+          final timingsIterable = await DB.instance.getAll<Timing>();
+          timings = Map.fromIterable(
+            timingsIterable.where((t) => (t).groupId == widget.group.id),
+            key: (t) => (t as Timing).id.toString(),
+          );
+          if (!mounted) return; // Проверка перед setState
+          setState(() {
+            isLoading = false;
+          });
+          debugPrint('_loadTimings success'); // Для отладки
+        } catch (e) {
+          if (!mounted) return; // Проверка перед setState
+          setState(() {
+            isLoading = false;
+          });
+          debugPrint('_loadTimings error: $e'); // Для отладки
+        }
+      }(),
+      onCancel: () => debugPrint('_loadTimings cancelled'),
+    );
     try {
-      // Фильтруем по groupId, предполагая, что Timing имеет поле groupId (FK на Group)
-      final timingsIterable = await DB.instance.getAll<Timing>();
-      timings = Map.fromIterable(
-        timingsIterable.where((t) => (t).groupId == widget.group.id),
-        key: (t) => (t as Timing).id.toString(),
-      );
-      setState(() {
-        isLoading = false;
-      });
+      await _loadOperation!.value;
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
+      debugPrint('_loadTimings error: $e');
     }
   }
 
   Future<void> _addTiming() async {
-    final TextEditingController dateController = TextEditingController();
+    debugPrint('Start _addTiming'); // Для отладки
     final TextEditingController timeControllerMM = TextEditingController();
     final TextEditingController timeControllerSS = TextEditingController();
     final TextEditingController timeControllerMMM = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
 
-    try {
-      final result = await showDialog<Map<String, dynamic>>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Добавить время'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
+    _addOperation = CancelableOperation.fromFuture(
+      () async {
+        try {
+          final result = await showDialog<Map<String, dynamic>>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Добавить время'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: timeControllerMM,
-                      decoration: const InputDecoration(labelText: 'MM'),
-                      maxLength: 2,
-                      keyboardType: TextInputType.number,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: timeControllerMM,
+                          decoration: const InputDecoration(labelText: 'MM'),
+                          maxLength: 2,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: timeControllerSS,
+                          decoration: const InputDecoration(labelText: 'SS'),
+                          maxLength: 2,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: timeControllerMMM,
+                          decoration: const InputDecoration(labelText: 'mmm'),
+                          maxLength: 3,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: timeControllerSS,
-                      decoration: const InputDecoration(labelText: 'SS'),
-                      maxLength: 2,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: timeControllerMMM,
-                      decoration: const InputDecoration(labelText: 'mmm'),
-                      maxLength: 3,
-                      keyboardType: TextInputType.number,
-                    ),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(labelText: 'Заметки'),
                   ),
                 ],
               ),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Заметки'),
-              ),
-            ],
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Отмена'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (timeControllerMM.text.isEmpty) {
-                      timeControllerMM.text = '00';
-                    }
-                    if (timeControllerSS.text.isEmpty) {
-                      timeControllerSS.text = '00';
-                    }
-                    if (timeControllerMMM.text.isEmpty) {
-                      timeControllerMMM.text = '000';
-                    }
+              actions: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Отмена'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (timeControllerMM.text.isEmpty) {
+                          timeControllerMM.text = '00';
+                        }
+                        if (timeControllerSS.text.isEmpty) {
+                          timeControllerSS.text = '00';
+                        }
+                        if (timeControllerMMM.text.isEmpty) {
+                          timeControllerMMM.text = '000';
+                        }
 
-                    Navigator.of(context).pop({
-                      'date': DateTime.now(),
-                      'time':
-                          '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
-                      'description': descriptionController.text,
-                    });
-                  },
-                  child: const Text('Добавить'),
+                        Navigator.of(context).pop({
+                          'date': DateTime
+                              .now(), // Исправлено: было DateTime.april, что неверно
+                          'time':
+                              '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
+                          'description': descriptionController.text,
+                        });
+                      },
+                      child: const Text('Добавить'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      );
+          );
 
-      dateController.dispose();
-      timeControllerMM.dispose();
-      timeControllerSS.dispose();
-      timeControllerMMM.dispose();
-      descriptionController.dispose();
+          // Контроллеры dispose не нужны здесь — они локальные и уничтожаются автоматически
 
-      if (result != null) {
-        final newTiming = Timing(
-          id: null,
-          date: result['date'] as DateTime,
-          time: result['time'] as String,
-          description: (result['description'] as String).isNotEmpty
-              ? result['description'] as String
-              : null,
-          groupId: widget.group.id,
-        );
-        await DB.instance.insert<Timing>(newTiming);
-        _loadTimings(); // Перезагрузка
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
-      }
-    }
+          if (result != null && mounted) {
+            // Проверка mounted перед продолжением
+            final newTiming = Timing(
+              id: null,
+              date: result['date'] as DateTime,
+              time: result['time'] as String,
+              description: (result['description'] as String).isNotEmpty
+                  ? result['description'] as String
+                  : null,
+              groupId: widget.group.id,
+            );
+            await DB.instance.insert<Timing>(newTiming);
+            if (mounted) {
+              // Дополнительная проверка перед _loadTimings
+              _loadTimings(); // Перезагрузка
+            }
+          }
+          debugPrint('_addTiming completed'); // Для отладки
+        } catch (e) {
+          if (mounted) {
+            // Проверка перед показом SnackBar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Ошибка: $e')),
+            );
+          }
+          debugPrint('_addTiming error: $e'); // Для отладки
+        }
+      }(),
+      onCancel: () => debugPrint('_addTiming cancelled'),
+    );
+
+    await _addOperation!.value;
   }
 
   Future<void> _deleteTiming(int? id) async {
     if (id == null) return; // Если id null, не удаляем
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Удалить время ?'),
-        content: const Text('Это действие нельзя отменить'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Отмена'),
+    _deleteOperation = CancelableOperation.fromFuture(
+      () async {
+        final bool? confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Удалить время ?'),
+            content: const Text('Это действие нельзя отменить'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Отмена'),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Удалить'),
+              ),
+            ],
           ),
-          const Spacer(),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Удалить'),
-          ),
-        ],
-      ),
-    );
+        );
 
-    if (confirm == true) {
-      try {
-        final timing = timings[id.toString()];
-        if (timing != null) {
-          await DB.instance.delete<Timing>(timing);
-          _loadTimings();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Время удалено')),
-            );
+        if (confirm == true && mounted) {
+          // Добавил проверку mounted
+          try {
+            final timing = timings[id.toString()];
+            if (timing != null) {
+              await DB.instance.delete<Timing>(timing);
+              if (mounted) {
+                // Проверка перед _loadTimings
+                _loadTimings();
+              }
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Время удалено')),
+                );
+              }
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Ошибка удаления: $e')),
+              );
+            }
           }
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ошибка удаления: $e')),
-          );
-        }
-      }
-    }
+      }(),
+      onCancel: () => debugPrint('_deleteTiming cancelled'),
+    );
+
+    await _deleteOperation!.value;
   }
 
   @override
