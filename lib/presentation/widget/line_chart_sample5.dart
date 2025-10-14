@@ -40,7 +40,7 @@ Widget buildTimingChartScreen(List<Timing> timings) {
   if (sortedTimings.isEmpty) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('График таймингов'),
+        title: const Text('График'),
         backgroundColor: Colors.blue,
       ),
       body: const Center(
@@ -85,7 +85,7 @@ Widget buildTimingChartScreen(List<Timing> timings) {
 
   return Scaffold(
     appBar: AppBar(
-      title: const Text('График таймингов'),
+      title: const Text('График'),
       backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
     ),
@@ -218,21 +218,21 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
                       'MIN: ${_secondsToTimeString(best)}',
                       style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.green),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
                       'MAX: ${_secondsToTimeString(worst)}',
                       style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.red),
                     ),
@@ -240,7 +240,7 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                   Text(
                     'AVG: ${_secondsToTimeString(average)}',
                     style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.blue),
                   ),

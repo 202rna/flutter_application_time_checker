@@ -227,23 +227,27 @@ class TimingsScreenState extends State<TimingsScreen> {
             ],
           ),
           child: AppBar(
-            backgroundColor: Colors
-                .transparent, // Важно: прозрачный фон, чтобы градиент был виден
-            elevation: 0, // Убираем elevation, так как тень в Container
+            backgroundColor: Colors.transparent,
+            elevation: 0,
             title: Text(
-              widget.group.name, // Или 'Timings'
+              widget.group.name,
               style: const TextStyle(
                 fontFamily: 'Roboto',
-                fontSize: 20, // fs ?? 30, но можешь настроить
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Color.fromARGB(252, 246, 243, 174),
               ),
             ),
             centerTitle: true,
-            automaticallyImplyLeading: true, // Кнопка "назад"
+            automaticallyImplyLeading: true,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.show_chart, color: Colors.white),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurpleAccent,
+                  foregroundColor: Colors.white,
+                  elevation: 5,
+                  padding: const EdgeInsets.all(10),
+                ),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -253,6 +257,15 @@ class TimingsScreenState extends State<TimingsScreen> {
                     ),
                   );
                 },
+                child: const Text(
+                  'График',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors
+                        .white, // Этот цвет игнорируется, градиент берёт верх
+                  ),
+                ),
               ),
             ],
           ),
