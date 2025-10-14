@@ -3,7 +3,7 @@ import 'package:flutter_application_time_checker/data/datasources/database.dart'
 import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/domain/model/timing.dart';
 import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
-import 'package:flutter_application_time_checker/presentation/widget/line_chart_sample5.dart';
+import 'package:flutter_application_time_checker/presentation/widget/line_chart.dart';
 
 class TimingsScreen extends StatefulWidget {
   final Group group;
