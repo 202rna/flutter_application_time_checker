@@ -1,277 +1,255 @@
-// import 'package:fl_chart/fl_chart.dart';
-// import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart'; // Для форматирования дат (добавьте в pubspec.yaml: intl: ^0.18.1)
+import 'package:flutter_application_time_checker/domain/model/timing.dart';
 
-// class LineChartSample5 extends StatefulWidget {
-//   const LineChartSample5({
-//     super.key,
-//     Color? gradientColor1,
-//     Color? gradientColor2,
-//     Color? gradientColor3,
-//     Color? indicatorStrokeColor,
-//   })  : gradientColor1 =
-//             gradientColor1 ?? const Color.fromARGB(255, 24, 33, 216),
-//         gradientColor2 =
-//             gradientColor2 ?? const Color.fromARGB(255, 216, 24, 200),
-//         gradientColor3 = gradientColor3 ?? const Color.fromARGB(255, 240, 5, 5),
-//         indicatorStrokeColor =
-//             indicatorStrokeColor ?? const Color.fromARGB(255, 1, 7, 110);
+// Функция для конвертации времени "MM:SS:mmm" в секунды (миллисекунды преобразуем в доли секунды)
+double _timeToSeconds(String time) {
+  final parts = time.split(':');
+  if (parts.length == 3) {
+    final minutes = int.tryParse(parts[0]) ?? 0;
+    final seconds = int.tryParse(parts[1]) ?? 0;
+    final milliseconds = int.tryParse(parts[2]) ?? 0;
+    return minutes * 60.0 +
+        seconds +
+        (milliseconds / 1000.0); // Возвращаем double для точности
+  }
+  return 0.0;
+}
 
-//   final Color gradientColor1;
-//   final Color gradientColor2;
-//   final Color gradientColor3;
-//   final Color indicatorStrokeColor;
+// Функция для форматирования секунд обратно в "MM:SS:mmm"
+String _secondsToTimeString(double seconds) {
+  final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+  final secs = ((seconds % 60).toInt()).toString().padLeft(2, '0');
+  final millis = ((seconds % 1) * 1000).toInt().toString().padLeft(3, '0');
+  return '$minutes:$secs:$millis';
+}
 
-//   @override
-//   State<LineChartSample5> createState() => _LineChartSample5State();
-// }
+// Функция для форматирования даты в "dd.MM"
+String _formatDate(DateTime date) {
+  return DateFormat('dd.MM').format(date);
+}
 
-// class _LineChartSample5State extends State<LineChartSample5> {
-//   List<int> showingTooltipOnSpots = [1, 3, 5];
+// Основная функция для экрана графика
+Widget buildTimingChartScreen(List<Timing> timings) {
+  // Сортируем по дате (ascending)
+  final sortedTimings = List<Timing>.from(timings)
+    ..sort((a, b) => a.date.compareTo(b.date));
 
-//   List<FlSpot> get allSpots => const [
-//         FlSpot(0, 1),
-//         FlSpot(1, 2),
-//         FlSpot(2, 1.5),
-//         FlSpot(3, 3),
-//         FlSpot(4, 3.5),
-//         FlSpot(5, 5),
-//         FlSpot(6, 8),
-//       ];
+  // Если нет данных
+  if (sortedTimings.isEmpty) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('График таймингов'),
+        backgroundColor: Colors.blue,
+      ),
+      body: const Center(
+        child: Text(
+          'Нет данных для графика',
+          style: TextStyle(fontSize: 18, color: Colors.grey),
+        ),
+      ),
+    );
+  }
 
-//   Widget bottomTitleWidgets(double value, TitleMeta meta, double chartWidth) {
-//     final style = TextStyle(
-//       fontWeight: FontWeight.bold,
-//       color: const Color.fromARGB(255, 184, 10, 237),
-//       fontFamily: 'Digital',
-//       fontSize: 18 * chartWidth / 500,
-//     );
-//     String text = switch (value.toInt()) {
-//       0 => '00:00',
-//       1 => '04:00',
-//       2 => '08:00',
-//       3 => '12:00',
-//       4 => '16:00',
-//       5 => '20:00',
-//       6 => '23:59',
-//       _ => '',
-//     };
-//     if (text.isEmpty) {
-//       return const SizedBox.shrink();
-//     }
-//     return SideTitleWidget(
-//       meta: meta,
-//       child: Text(text, style: style),
-//     );
-//   }
+  // Создаём точки данных: X = индекс (для равномерных интервалов), Y = секунды
+  final spots = <FlSpot>[];
+  final dateLabels = <String>[];
+  double maxY = 0.0; // Инициализируем с 0.0, чтобы корректно считать максимум
+  final uniqueY = <double>{}; // Множество уникальных Y-значений для меток оси Y
+  final secondsList = <double>[]; // Список секунд для расчёта статистики
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final lineBarsData = [
-//       LineChartBarData(
-//         showingIndicators: showingTooltipOnSpots,
-//         spots: allSpots,
-//         isCurved: true,
-//         barWidth: 4,
-//         shadow: const Shadow(
-//           blurRadius: 8,
-//         ),
-//         belowBarData: BarAreaData(
-//           show: true,
-//           gradient: LinearGradient(
-//             colors: [
-//               widget.gradientColor1,
-//               widget.gradientColor2,
-//               widget.gradientColor3,
-//             ],
-//           ),
-//         ),
-//         dotData: const FlDotData(show: false),
-//         gradient: LinearGradient(
-//           colors: [
-//             widget.gradientColor1,
-//             widget.gradientColor2,
-//             widget.gradientColor3,
-//           ],
-//           stops: const [0.1, 0.4, 0.9],
-//         ),
-//       ),
-//     ];
+  for (int i = 0; i < sortedTimings.length; i++) {
+    final timing = sortedTimings[i];
+    final seconds = _timeToSeconds(timing.time); // Теперь double
+    spots.add(
+        FlSpot(i.toDouble(), seconds)); // X: индекс (равномерный), Y: секунды
+    dateLabels.add(_formatDate(timing.date)); // Метка даты
+    uniqueY.add(seconds); // Добавляем в уникальные Y
+    secondsList.add(seconds); // Для статистики
+    if (seconds > maxY) maxY = seconds;
+  }
 
-//     final tooltipsOnBar = lineBarsData[0];
+  // MaxY с буфером (добавляем 10 сек для отступа сверху, если maxY > 0)
+  maxY = maxY > 0
+      ? maxY + 10
+      : 10; // Если все 0, установим минимум 10 для видимости
 
-//     return AspectRatio(
-//       aspectRatio: 2.5,
-//       child: Padding(
-//         padding: const EdgeInsets.symmetric(
-//           horizontal: 24.0,
-//           vertical: 10,
-//         ),
-//         child: LayoutBuilder(builder: (context, constraints) {
-//           return LineChart(
-//             LineChartData(
-//               showingTooltipIndicators: showingTooltipOnSpots.map((index) {
-//                 return ShowingTooltipIndicators([
-//                   LineBarSpot(
-//                     tooltipsOnBar,
-//                     lineBarsData.indexOf(tooltipsOnBar),
-//                     tooltipsOnBar.spots[index],
-//                   ),
-//                 ]);
-//               }).toList(),
-//               lineTouchData: LineTouchData(
-//                 enabled: true,
-//                 handleBuiltInTouches: false,
-//                 touchCallback:
-//                     (FlTouchEvent event, LineTouchResponse? response) {
-//                   if (response == null || response.lineBarSpots == null) {
-//                     return;
-//                   }
-//                   if (event is FlTapUpEvent) {
-//                     final spotIndex = response.lineBarSpots!.first.spotIndex;
-//                     setState(() {
-//                       if (showingTooltipOnSpots.contains(spotIndex)) {
-//                         showingTooltipOnSpots.remove(spotIndex);
-//                       } else {
-//                         showingTooltipOnSpots.add(spotIndex);
-//                       }
-//                     });
-//                   }
-//                 },
-//                 mouseCursorResolver:
-//                     (FlTouchEvent event, LineTouchResponse? response) {
-//                   if (response == null || response.lineBarSpots == null) {
-//                     return SystemMouseCursors.basic;
-//                   }
-//                   return SystemMouseCursors.click;
-//                 },
-//                 getTouchedSpotIndicator:
-//                     (LineChartBarData barData, List<int> spotIndexes) {
-//                   return spotIndexes.map((index) {
-//                     return TouchedSpotIndicatorData(
-//                       const FlLine(
-//                         color: Colors.pink,
-//                       ),
-//                       FlDotData(
-//                         show: true,
-//                         getDotPainter: (spot, percent, barData, index) =>
-//                             FlDotCirclePainter(
-//                           radius: 8,
-//                           color: lerpGradient(
-//                             barData.gradient!.colors,
-//                             barData.gradient!.stops!,
-//                             percent / 100,
-//                           ),
-//                           strokeWidth: 2,
-//                           strokeColor: widget.indicatorStrokeColor,
-//                         ),
-//                       ),
-//                     );
-//                   }).toList();
-//                 },
-//                 touchTooltipData: LineTouchTooltipData(
-//                   getTooltipColor: (touchedSpot) => Colors.pink,
-//                   tooltipBorderRadius: BorderRadius.circular(8),
-//                   getTooltipItems: (List<LineBarSpot> lineBarsSpot) {
-//                     return lineBarsSpot.map((lineBarSpot) {
-//                       return LineTooltipItem(
-//                         lineBarSpot.y.toString(),
-//                         const TextStyle(
-//                           color: Colors.white,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       );
-//                     }).toList();
-//                   },
-//                 ),
-//               ),
-//               lineBarsData: lineBarsData,
-//               minY: 0,
-//               titlesData: FlTitlesData(
-//                 leftTitles: const AxisTitles(
-//                   axisNameWidget: Text('count'),
-//                   axisNameSize: 24,
-//                   sideTitles: SideTitles(
-//                     showTitles: false,
-//                     reservedSize: 0,
-//                   ),
-//                 ),
-//                 bottomTitles: AxisTitles(
-//                   sideTitles: SideTitles(
-//                     showTitles: true,
-//                     interval: 1,
-//                     getTitlesWidget: (value, meta) {
-//                       return bottomTitleWidgets(
-//                         value,
-//                         meta,
-//                         constraints.maxWidth,
-//                       );
-//                     },
-//                     reservedSize: 30,
-//                   ),
-//                 ),
-//                 rightTitles: const AxisTitles(
-//                   axisNameWidget: Text('count'),
-//                   sideTitles: SideTitles(
-//                     showTitles: false,
-//                     reservedSize: 0,
-//                   ),
-//                 ),
-//                 topTitles: const AxisTitles(
-//                   axisNameWidget: Text(
-//                     'Wall clock',
-//                     textAlign: TextAlign.left,
-//                   ),
-//                   axisNameSize: 24,
-//                   sideTitles: SideTitles(
-//                     showTitles: true,
-//                     reservedSize: 0,
-//                   ),
-//                 ),
-//               ),
-//               gridData: const FlGridData(show: false),
-//               borderData: FlBorderData(
-//                 show: true,
-//                 border: Border.all(
-//                   color: const Color.fromARGB(255, 134, 8, 4),
-//                 ),
-//               ),
-//             ),
-//           );
-//         }),
-//       ),
-//     );
-//   }
-// }
+  // Расчёт статистики
+  final best = secondsList.reduce((a, b) => a < b ? a : b); // Минимальное время
+  final worst =
+      secondsList.reduce((a, b) => a > b ? a : b); // Максимальное время
+  final average = secondsList.isNotEmpty
+      ? secondsList.reduce((a, b) => a + b) / secondsList.length
+      : 0.0; // Среднее время
 
-// /// Lerps between a [LinearGradient] colors, based on [t]
-// Color lerpGradient(List<Color> colors, List<double> stops, double t) {
-//   if (colors.isEmpty) {
-//     throw ArgumentError('"colors" is empty.');
-//   } else if (colors.length == 1) {
-//     return colors[0];
-//   }
-
-//   if (stops.length != colors.length) {
-//     stops = [];
-
-//     /// provided gradientColorStops is invalid and we calculate it here
-//     colors.asMap().forEach((index, color) {
-//       final percent = 1.0 / (colors.length - 1);
-//       stops.add(percent * index);
-//     });
-//   }
-
-//   for (var s = 0; s < stops.length - 1; s++) {
-//     final leftStop = stops[s];
-//     final rightStop = stops[s + 1];
-//     final leftColor = colors[s];
-//     final rightColor = colors[s + 1];
-//     if (t <= leftStop) {
-//       return leftColor;
-//     } else if (t < rightStop) {
-//       final sectionT = (t - leftStop) / (rightStop - leftStop);
-//       return Color.lerp(leftColor, rightColor, sectionT)!;
-//     }
-//   }
-//   return colors.last;
-// }
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('График таймингов'),
+      backgroundColor: Colors.blue,
+      foregroundColor: Colors.white,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 300, // Высота графика
+            child: LineChart(
+              LineChartData(
+                // Сетка
+                gridData: const FlGridData(
+                  show: true,
+                  drawVerticalLine: true,
+                  horizontalInterval: 60, // Интервал сетки по Y (каждые 60 сек)
+                  verticalInterval: 1, // Интервал по X (каждый индекс)
+                ),
+                // Заголовки осей
+                titlesData: FlTitlesData(
+                  // Ось X (bottom): метки дат с равномерными интервалами
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < dateLabels.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              dateLabels[index],
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.black),
+                            ),
+                          );
+                        }
+                        return const Text('');
+                      },
+                      interval: 1, // Равномерный интервал: каждый пункт
+                      reservedSize: 30,
+                    ),
+                  ),
+                  // Ось Y (left): метки в MM:SS:mmm только для значений, присутствующих на графике
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (uniqueY.contains(value)) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Text(
+                              _secondsToTimeString(value),
+                              style: const TextStyle(
+                                  fontSize: 10, color: Colors.black),
+                            ),
+                          );
+                        }
+                        return const SizedBox(); // Пусто, если значение не в данных
+                      },
+                      reservedSize: 50,
+                    ),
+                  ),
+                  // Скрываем top и right
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                ),
+                // Границы
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border.all(color: Colors.grey),
+                ),
+                // Тултипы при касании точки: показывают оригинальное время MM:SS:mmm
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final index = spot.spotIndex;
+                        final originalTime =
+                            sortedTimings[index].time; // Оригинальное время
+                        return LineTooltipItem(
+                          originalTime, // Показываем MM:SS:mmm
+                          const TextStyle(color: Colors.white, fontSize: 12),
+                        );
+                      }).toList();
+                    },
+                    //tooltipBgColor: Colors.blueAccent,
+                  ),
+                ),
+                // Линия графика
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true, // Кривая линия для плавности
+                    color: Colors.blue,
+                    barWidth: 3,
+                    belowBarData: BarAreaData(
+                      show: false, // Без заливки под линией
+                    ),
+                    dotData: FlDotData(
+                      show: true, // Показывать точки
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                        radius: 4,
+                        color: Colors.blue,
+                        strokeWidth: 2,
+                        strokeColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+                // Диапазоны осей
+                minX: 0,
+                maxX: (spots.length - 1).toDouble(),
+                minY: 0,
+                maxY: maxY,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Статистика под графиком
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Text(
+                      'MIN: ${_secondsToTimeString(best)}',
+                      style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Text(
+                      'MAX: ${_secondsToTimeString(worst)}',
+                      style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red),
+                    ),
+                  ),
+                  Text(
+                    'AVG: ${_secondsToTimeString(average)}',
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}

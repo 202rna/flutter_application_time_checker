@@ -3,6 +3,7 @@ import 'package:flutter_application_time_checker/data/datasources/database.dart'
 import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/domain/model/timing.dart';
 import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
+import 'package:flutter_application_time_checker/presentation/widget/line_chart_sample5.dart';
 
 class TimingsScreen extends StatefulWidget {
   final Group group;
@@ -208,7 +209,55 @@ class TimingsScreenState extends State<TimingsScreen> {
     }
 
     return Scaffold(
-      appBar: GradientAppBar(title: widget.group.name),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue, Colors.purple, Colors.red],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromRGBO(0, 0, 0, 0.3),
+                offset: Offset(0, 4),
+                blurRadius: 3,
+              ),
+            ],
+          ),
+          child: AppBar(
+            backgroundColor: Colors
+                .transparent, // Важно: прозрачный фон, чтобы градиент был виден
+            elevation: 0, // Убираем elevation, так как тень в Container
+            title: Text(
+              widget.group.name, // Или 'Timings'
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 20, // fs ?? 30, но можешь настроить
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(252, 246, 243, 174),
+              ),
+            ),
+            centerTitle: true,
+            automaticallyImplyLeading: true, // Кнопка "назад"
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.show_chart, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          buildTimingChartScreen(timings.values.toList()),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       body: timings.isEmpty
           ? const Center(child: Text('Нет записей'))
           : ListView.builder(

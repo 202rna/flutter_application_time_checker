@@ -23,7 +23,7 @@ class Timing implements DbModel {
     return <String, dynamic>{
       'id': id,
       'date': date.toIso8601String(), // DateTime в строку
-      'time': time, // Duration в секунды (или другой формат)
+      'time': time,
       'description': description,
       'groupId': groupId,
     };
