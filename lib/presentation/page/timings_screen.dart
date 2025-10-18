@@ -95,7 +95,7 @@ class TimingsScreenState extends State<TimingsScreen> {
                         child: TextField(
                           controller: timeControllerMM,
                           decoration: const InputDecoration(labelText: 'MM'),
-                          maxLength: 2,
+                          maxLength: 10,
                           keyboardType: TextInputType.number,
                         ),
                       ),
@@ -224,13 +224,11 @@ class TimingsScreenState extends State<TimingsScreen> {
         );
 
         if (confirm == true && mounted) {
-          // Добавил проверку mounted
           try {
             final timing = timings[id.toString()];
             if (timing != null) {
               await DB.instance.delete<Timing>(timing);
               if (mounted) {
-                // Проверка перед _loadTimings
                 _loadTimings();
               }
               if (mounted) {
@@ -287,7 +285,6 @@ class TimingsScreenState extends State<TimingsScreen> {
             title: Text(
               widget.group.name,
               style: const TextStyle(
-                fontFamily: 'Roboto',
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Color.fromARGB(252, 246, 243, 174),
@@ -296,29 +293,32 @@ class TimingsScreenState extends State<TimingsScreen> {
             centerTitle: true,
             automaticallyImplyLeading: true,
             actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurpleAccent,
-                  foregroundColor: Colors.white,
-                  elevation: 5,
-                  padding: const EdgeInsets.all(10),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          buildTimingChartScreen(timings.values.toList()),
+              Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 169, 255, 77),
+                    foregroundColor: Colors.white,
+                    elevation: 5,
+                    padding: const EdgeInsets.all(10),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            buildTimingChartScreen(timings.values.toList()),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'График',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontVariations: [FontVariation('wght', 500)],
+                      fontFamily: 'Nunito',
+                      color: Color.fromARGB(255, 2, 5, 136),
                     ),
-                  );
-                },
-                child: const Text(
-                  'График',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors
-                        .white, // Этот цвет игнорируется, градиент берёт верх
                   ),
                 ),
               ),

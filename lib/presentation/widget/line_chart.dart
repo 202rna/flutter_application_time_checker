@@ -80,173 +80,190 @@ Widget buildTimingChartScreen(List<Timing> timings) {
 
   // Расчёт статистики
   final best = secondsList.reduce((a, b) => a < b ? a : b);
-  final worst =
-      secondsList.reduce((a, b) => a > b ? a : b);
+  final worst = secondsList.reduce((a, b) => a > b ? a : b);
   final average = secondsList.isNotEmpty
       ? secondsList.reduce((a, b) => a + b) / secondsList.length
       : 0.0;
 
   return Scaffold(
     appBar: AppBar(
-      title: const Text(
-        'График',
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 28,
-          fontVariations: [FontVariation('wght', 900)],
-          color: Color.fromRGBO(231, 236, 80, 1),
-        ),
+      title: const Row(
+        children: [
+          Text(
+            'График',
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 28,
+              fontVariations: [FontVariation('wght', 900)],
+              color: Color.fromRGBO(231, 236, 80, 1),
+            ),
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Text(
+            '(по датам)',
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 18,
+              fontVariations: [FontVariation('wght', 900)],
+              color: Color.fromRGBO(194, 196, 144, 1),
+            ),
+          ),
+        ],
       ),
-      centerTitle: true,
       backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
     ),
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 300, // Высота графика
-            child: LineChart(
-              LineChartData(
-                // Сетка
-                gridData: const FlGridData(
-                  show: true,
-                  drawVerticalLine: true,
-                  //horizontalInterval: 60, // Интервал сетки по Y (каждые 60 сек)
-                  verticalInterval: 1, // Интервал по X (каждый индекс)
-                ),
-                // Заголовки осей
-                titlesData: FlTitlesData(
-                  // Ось X (bottom): метки дат с равномерными интервалами
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 0 && index < dateLabels.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              dateLabels[index],
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.black),
-                            ),
-                          );
-                        }
-                        return const Text('');
-                      },
-                      interval: dateLabels.length / 4,
-                      reservedSize: 30,
-                    ),
+    body: SingleChildScrollView(
+      // Добавлено для прокрутки, если контент не помещается на экран
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 300, // Высота графика
+              child: LineChart(
+                LineChartData(
+                  // Сетка
+                  gridData: const FlGridData(
+                    show: true,
+                    drawVerticalLine: true,
+                    //horizontalInterval: 60, // Интервал сетки по Y (каждые 60 сек)
+                    verticalInterval: 1, // Интервал по X (каждый индекс)
                   ),
-                  // Ось Y (left): метки в MM:SS:mmm только для значений, присутствующих на графике
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: false,
-                    ),
-                  ),
-                  // Скрываем top и right
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
-                // Границы
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(color: Colors.grey),
-                ),
-                // Тултипы при касании точки: показывают оригинальное время MM:SS:mmm
-                lineTouchData: LineTouchData(
-                  enabled: true,
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((spot) {
-                        final index = spot.spotIndex;
-                        final originalTime =
-                            sortedTimings[index].time; // Оригинальное время
-                        final originalDate = dateLabels[index];
-                        return LineTooltipItem(
-                          '$originalTime\n $originalDate', // Показываем MM:SS:mmm
-                          const TextStyle(color: Colors.white, fontSize: 15),
-                        );
-                      }).toList();
-                    },
-                  ),
-                ),
-                // Линия графика
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: spots,
-                    isCurved: true, // Кривая линия для плавности
-                    color: Colors.blue,
-                    barWidth: 3,
-                    belowBarData: BarAreaData(
-                      show: false, // Без заливки под линией
-                    ),
-                    dotData: FlDotData(
-                      show: true, // Показывать точки
-                      getDotPainter: (spot, percent, barData, index) =>
-                          FlDotCirclePainter(
-                        radius: 4,
-                        color: const Color.fromARGB(255, 194, 227, 30),
-                        strokeWidth: 2,
-                        strokeColor: Colors.white,
+                  // Заголовки осей
+                  titlesData: FlTitlesData(
+                    // Ось X (bottom): метки дат с равномерными интервалами
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
+                          if (index >= 0 && index < dateLabels.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                dateLabels[index],
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.black),
+                              ),
+                            );
+                          }
+                          return const Text('');
+                        },
+                        interval: dateLabels.length / 4,
+                        reservedSize: 30,
                       ),
                     ),
+                    // Ось Y (left): метки в MM:SS:mmm только для значений, присутствующих на графике
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: false,
+                      ),
+                    ),
+                    // Скрываем top и right
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
                   ),
-                ],
-                // Диапазоны осей
-                minX: 0,
-                maxX: (spots.length - 1).toDouble(),
-                minY: 0,
-                maxY: maxY,
+                  // Границы
+                  borderData: FlBorderData(
+                    show: true,
+                    border: Border.all(color: Colors.grey),
+                  ),
+                  // Тултипы при касании точки: показывают оригинальное время MM:SS:mmm
+                  lineTouchData: LineTouchData(
+                    enabled: true,
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final index = spot.spotIndex;
+                          final originalTime =
+                              sortedTimings[index].time; // Оригинальное время
+                          final originalDate = dateLabels[index];
+                          return LineTooltipItem(
+                            '$originalTime\n $originalDate', // Показываем MM:SS:mmm
+                            const TextStyle(color: Colors.white, fontSize: 15),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
+                  // Линия графика
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: true, // Кривая линия для плавности
+                      color: Colors.blue,
+                      barWidth: 3,
+                      belowBarData: BarAreaData(
+                        show: false, // Без заливки под линией
+                      ),
+                      dotData: FlDotData(
+                        show: true, // Показывать точки
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 4,
+                          color: const Color.fromARGB(255, 194, 227, 30),
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                  // Диапазоны осей
+                  minX: 0,
+                  maxX: (spots.length - 1).toDouble(),
+                  minY: 0,
+                  maxY: maxY,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          // Статистика под графиком
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Text(
-                      'MIN: ${_secondsToTimeString(best)}',
+            const SizedBox(height: 20),
+            // Статистика под графиком
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        'MIN: ${_secondsToTimeString(best)}',
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        'MAX: ${_secondsToTimeString(worst)}',
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red),
+                      ),
+                    ),
+                    Text(
+                      'AVG: ${_secondsToTimeString(average)}',
                       style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green),
+                          color: Colors.blue),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Text(
-                      'MAX: ${_secondsToTimeString(worst)}',
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red),
-                    ),
-                  ),
-                  Text(
-                    'AVG: ${_secondsToTimeString(average)}',
-                    style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     ),
   );

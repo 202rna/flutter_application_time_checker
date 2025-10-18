@@ -77,8 +77,8 @@ class HomeState extends State<Home> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Удалить запись'),
-        content: const Text(
-            'Это действие нельзя отменить. Удалить запись и все связанные группы и результаты ?'),
+        content:
+            const Text('Удалить запись и все связанные группы и результаты ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

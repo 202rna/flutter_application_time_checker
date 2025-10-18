@@ -84,8 +84,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Удалить запись'),
-        content: const Text(
-            'Это действие нельзя отменить. Удалить группу и все связанные результаты ?'),
+        content: const Text('Удалить группу и все связанные результаты ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
