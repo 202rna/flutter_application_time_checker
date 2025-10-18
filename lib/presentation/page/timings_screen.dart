@@ -4,7 +4,8 @@ import 'package:flutter_application_time_checker/domain/model/group.dart';
 import 'package:flutter_application_time_checker/domain/model/timing.dart';
 import 'package:flutter_application_time_checker/presentation/widget/gradient_app_bar.dart';
 import 'package:flutter_application_time_checker/presentation/widget/line_chart.dart';
-import 'package:async/async.dart'; // Добавьте этот импорт для CancelableOperation
+import 'package:async/async.dart';
+import 'package:flutter/services.dart';
 
 class TimingsScreen extends StatefulWidget {
   final Group group;
@@ -93,10 +94,13 @@ class TimingsScreenState extends State<TimingsScreen> {
                     children: [
                       Expanded(
                         child: TextField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           controller: timeControllerMM,
                           decoration: const InputDecoration(labelText: 'MM'),
                           maxLength: 10,
-                          keyboardType: TextInputType.number,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -106,6 +110,9 @@ class TimingsScreenState extends State<TimingsScreen> {
                           decoration: const InputDecoration(labelText: 'SS'),
                           maxLength: 2,
                           keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -115,6 +122,9 @@ class TimingsScreenState extends State<TimingsScreen> {
                           decoration: const InputDecoration(labelText: 'mmm'),
                           maxLength: 3,
                           keyboardType: TextInputType.number,
+                          inputFormatters: <TextInputFormatter>[
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                         ),
                       ),
                     ],
@@ -328,7 +338,9 @@ class TimingsScreenState extends State<TimingsScreen> {
       ),
       body: timings.isEmpty
           ? const Center(child: Text('Нет записей'))
-          : ListView.builder(
+          : ListView.separated(
+              separatorBuilder: (BuildContext context, int index) =>
+                  const Divider(),
               itemCount: timings.length,
               itemBuilder: (context, index) {
                 // Получаем перевернутый список ключей (последний добавленный — первый)
@@ -336,15 +348,22 @@ class TimingsScreenState extends State<TimingsScreen> {
                 final timingKey = reversedKeys[index];
                 final timing = timings[timingKey]!;
                 return ListTile(
-                  title: Wrap(
-                    spacing: 18.0,
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                           'Дата: ${timing.date.toLocal().toString().split(' ')[0]}'),
                       Text("Время: ${timing.time}"),
+                      Text(
+                        timing.description ?? '',
+                        style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontVariations: [FontVariation('wght', 500)],
+                            color: Color.fromRGBO(90, 2, 2, 1)),
+                      )
                     ],
                   ),
-                  subtitle: Text(timing.description ?? ''),
+                  //subtitle: Text(timing.description ?? ''),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _deleteTiming(timing.id),

@@ -13,6 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_launcher_icons: "^0.13.0"
   intl: ^0.18.1
   cupertino_icons: ^1.0.8
   sqflite: ^2.4.1
@@ -53,3 +54,7 @@ flutter:
       fonts:
         - asset: assets/fonts/Inter-Var.ttf
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon_watch.png"
