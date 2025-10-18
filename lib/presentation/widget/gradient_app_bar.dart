@@ -31,15 +31,15 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       child: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromARGB(0, 235, 238, 36),
         elevation: 0,
         title: Text(
           title,
           style: TextStyle(
-            fontFamily: 'Roboto',
+            fontFamily: 'Nunito',
             fontSize: fs ?? 30,
-            fontWeight: FontWeight.bold,
-            color: const Color.fromARGB(252, 246, 243, 174),
+            fontVariations: const [FontVariation('wght', 800)],
+            color: const Color.fromARGB(255, 231, 231, 34),
           ),
         ),
         centerTitle: true,

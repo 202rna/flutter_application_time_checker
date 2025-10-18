@@ -135,23 +135,26 @@ class TimingsScreenState extends State<TimingsScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        if (timeControllerMM.text.isEmpty) {
-                          timeControllerMM.text = '00';
-                        }
-                        if (timeControllerSS.text.isEmpty) {
-                          timeControllerSS.text = '00';
-                        }
-                        if (timeControllerMMM.text.isEmpty) {
-                          timeControllerMMM.text = '000';
-                        }
+                        if (timeControllerMM.text.isNotEmpty ||
+                            timeControllerSS.text.isNotEmpty ||
+                            timeControllerMMM.text.isNotEmpty) {
+                          if (timeControllerMM.text.isEmpty) {
+                            timeControllerMM.text = '00';
+                          }
+                          if (timeControllerSS.text.isEmpty) {
+                            timeControllerSS.text = '00';
+                          }
+                          if (timeControllerMMM.text.isEmpty) {
+                            timeControllerMMM.text = '000';
+                          }
 
-                        Navigator.of(context).pop({
-                          'date': DateTime
-                              .now(), // Исправлено: было DateTime.april, что неверно
-                          'time':
-                              '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
-                          'description': descriptionController.text,
-                        });
+                          Navigator.of(context).pop({
+                            'date': DateTime.now(),
+                            'time':
+                                '${timeControllerMM.text}:${timeControllerSS.text}:${timeControllerMMM.text}',
+                            'description': descriptionController.text,
+                          });
+                        }
                       },
                       child: const Text('Добавить'),
                     ),

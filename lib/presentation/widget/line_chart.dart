@@ -40,8 +40,11 @@ Widget buildTimingChartScreen(List<Timing> timings) {
   if (sortedTimings.isEmpty) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('График'),
+        title: const Text(
+          'График',
+        ),
         backgroundColor: Colors.blue,
+        centerTitle: true,
       ),
       body: const Center(
         child: Text(
@@ -76,16 +79,25 @@ Widget buildTimingChartScreen(List<Timing> timings) {
       : 10; // Если все 0, установим минимум 10 для видимости
 
   // Расчёт статистики
-  final best = secondsList.reduce((a, b) => a < b ? a : b); // Минимальное время
+  final best = secondsList.reduce((a, b) => a < b ? a : b);
   final worst =
-      secondsList.reduce((a, b) => a > b ? a : b); // Максимальное время
+      secondsList.reduce((a, b) => a > b ? a : b);
   final average = secondsList.isNotEmpty
       ? secondsList.reduce((a, b) => a + b) / secondsList.length
-      : 0.0; // Среднее время
+      : 0.0;
 
   return Scaffold(
     appBar: AppBar(
-      title: const Text('График'),
+      title: const Text(
+        'График',
+        style: TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 28,
+          fontVariations: [FontVariation('wght', 900)],
+          color: Color.fromRGBO(231, 236, 80, 1),
+        ),
+      ),
+      centerTitle: true,
       backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
     ),
@@ -102,7 +114,7 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                 gridData: const FlGridData(
                   show: true,
                   drawVerticalLine: true,
-                  horizontalInterval: 60, // Интервал сетки по Y (каждые 60 сек)
+                  //horizontalInterval: 60, // Интервал сетки по Y (каждые 60 сек)
                   verticalInterval: 1, // Интервал по X (каждый индекс)
                 ),
                 // Заголовки осей
@@ -125,28 +137,14 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                         }
                         return const Text('');
                       },
-                      interval: 1, // Равномерный интервал: каждый пункт
+                      interval: dateLabels.length / 4,
                       reservedSize: 30,
                     ),
                   ),
                   // Ось Y (left): метки в MM:SS:mmm только для значений, присутствующих на графике
-                  leftTitles: AxisTitles(
+                  leftTitles: const AxisTitles(
                     sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (uniqueY.contains(value)) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Text(
-                              _secondsToTimeString(value),
-                              style: const TextStyle(
-                                  fontSize: 10, color: Colors.black),
-                            ),
-                          );
-                        }
-                        return const SizedBox(); // Пусто, если значение не в данных
-                      },
-                      reservedSize: 50,
+                      showTitles: false,
                     ),
                   ),
                   // Скрываем top и right
@@ -169,13 +167,13 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                         final index = spot.spotIndex;
                         final originalTime =
                             sortedTimings[index].time; // Оригинальное время
+                        final originalDate = dateLabels[index];
                         return LineTooltipItem(
-                          originalTime, // Показываем MM:SS:mmm
-                          const TextStyle(color: Colors.white, fontSize: 12),
+                          '$originalTime\n $originalDate', // Показываем MM:SS:mmm
+                          const TextStyle(color: Colors.white, fontSize: 15),
                         );
                       }).toList();
                     },
-                    //tooltipBgColor: Colors.blueAccent,
                   ),
                 ),
                 // Линия графика
@@ -193,7 +191,7 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                       getDotPainter: (spot, percent, barData, index) =>
                           FlDotCirclePainter(
                         radius: 4,
-                        color: Colors.blue,
+                        color: const Color.fromARGB(255, 194, 227, 30),
                         strokeWidth: 2,
                         strokeColor: Colors.white,
                       ),
