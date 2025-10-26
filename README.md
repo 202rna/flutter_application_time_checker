@@ -35,6 +35,7 @@ The application consists of three main components:
 </table>
 
 
+---
 
-
+### You can install this app from RuStore <https://www.rustore.ru/catalog/app/com.example.flutter_application_time_checker>
 ***The application saves data based on the built-in sqlite database. The data may be lost when reinstalling the application! It is completely free and contains no ads.***
