@@ -10,9 +10,7 @@ double _timeToSeconds(String time) {
     final minutes = int.tryParse(parts[0]) ?? 0;
     final seconds = int.tryParse(parts[1]) ?? 0;
     final milliseconds = int.tryParse(parts[2]) ?? 0;
-    return minutes * 60.0 +
-        seconds +
-        (milliseconds / 1000.0); // Возвращаем double для точности
+    return minutes * 60.0 + seconds + (milliseconds / 1000.0);
   }
   return 0.0;
 }
@@ -25,18 +23,18 @@ String _secondsToTimeString(double seconds) {
   return '$minutes:$secs:$millis';
 }
 
-// Функция для форматирования даты в "dd.MM"
 String _formatDate(DateTime date) {
   return DateFormat('dd.MM').format(date);
 }
 
-// Основная функция для экрана графика
+String _formatDateWithYear(DateTime date) {
+  return DateFormat('dd.MM.yyyy').format(date);
+}
+
 Widget buildTimingChartScreen(List<Timing> timings) {
-  // Сортируем по дате (ascending)
   final sortedTimings = List<Timing>.from(timings)
     ..sort((a, b) => a.date.compareTo(b.date));
 
-  // Если нет данных
   if (sortedTimings.isEmpty) {
     return Scaffold(
       appBar: AppBar(
@@ -55,21 +53,19 @@ Widget buildTimingChartScreen(List<Timing> timings) {
     );
   }
 
-  // Создаём точки данных: X = индекс (для равномерных интервалов), Y = секунды
   final spots = <FlSpot>[];
   final dateLabels = <String>[];
   double maxY = 0.0; // Инициализируем с 0.0, чтобы корректно считать максимум
-  final uniqueY = <double>{}; // Множество уникальных Y-значений для меток оси Y
+  final uniqueY = <double>{};
   final secondsList = <double>[]; // Список секунд для расчёта статистики
 
   for (int i = 0; i < sortedTimings.length; i++) {
     final timing = sortedTimings[i];
-    final seconds = _timeToSeconds(timing.time); // Теперь double
-    spots.add(
-        FlSpot(i.toDouble(), seconds)); // X: индекс (равномерный), Y: секунды
-    dateLabels.add(_formatDate(timing.date)); // Метка даты
-    uniqueY.add(seconds); // Добавляем в уникальные Y
-    secondsList.add(seconds); // Для статистики
+    final seconds = _timeToSeconds(timing.time);
+    spots.add(FlSpot(i.toDouble(), seconds));
+    dateLabels.add(_formatDate(timing.date));
+    uniqueY.add(seconds);
+    secondsList.add(seconds);
     if (seconds > maxY) maxY = seconds;
   }
 
@@ -116,7 +112,6 @@ Widget buildTimingChartScreen(List<Timing> timings) {
       foregroundColor: Colors.white,
     ),
     body: SingleChildScrollView(
-      // Добавлено для прокрутки, если контент не помещается на экран
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
         child: Column(
@@ -126,16 +121,14 @@ Widget buildTimingChartScreen(List<Timing> timings) {
               height: 300, // Высота графика
               child: LineChart(
                 LineChartData(
-                  // Сетка
                   gridData: const FlGridData(
                     show: true,
                     drawVerticalLine: true,
-                    //horizontalInterval: 60, // Интервал сетки по Y (каждые 60 сек)
-                    verticalInterval: 1, // Интервал по X (каждый индекс)
+                    //horizontalInterval: 60,
+                    verticalInterval: 1,
                   ),
                   // Заголовки осей
                   titlesData: FlTitlesData(
-                    // Ось X (bottom): метки дат с равномерными интервалами
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -153,39 +146,34 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                           }
                           return const Text('');
                         },
-                        interval: dateLabels.length / 4,
+                        interval: dateLabels.length / 3,
                         reservedSize: 30,
                       ),
                     ),
-                    // Ось Y (left): метки в MM:SS:mmm только для значений, присутствующих на графике
                     leftTitles: const AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: false,
                       ),
                     ),
-                    // Скрываем top и right
                     topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false)),
                     rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false)),
                   ),
-                  // Границы
                   borderData: FlBorderData(
                     show: true,
                     border: Border.all(color: Colors.grey),
                   ),
-                  // Тултипы при касании точки: показывают оригинальное время MM:SS:mmm
                   lineTouchData: LineTouchData(
                     enabled: true,
                     touchTooltipData: LineTouchTooltipData(
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
                           final index = spot.spotIndex;
-                          final originalTime =
-                              sortedTimings[index].time; // Оригинальное время
+                          final originalTime = sortedTimings[index].time;
                           final originalDate = dateLabels[index];
                           return LineTooltipItem(
-                            '$originalTime\n $originalDate', // Показываем MM:SS:mmm
+                            '$originalTime\n $originalDate',
                             const TextStyle(color: Colors.white, fontSize: 15),
                           );
                         }).toList();
@@ -196,11 +184,11 @@ Widget buildTimingChartScreen(List<Timing> timings) {
                   lineBarsData: [
                     LineChartBarData(
                       spots: spots,
-                      isCurved: true, // Кривая линия для плавности
+                      isCurved: true,
                       color: Colors.blue,
                       barWidth: 3,
                       belowBarData: BarAreaData(
-                        show: false, // Без заливки под линией
+                        show: false,
                       ),
                       dotData: FlDotData(
                         show: true, // Показывать точки

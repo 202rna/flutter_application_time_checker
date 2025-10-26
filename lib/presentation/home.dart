@@ -44,7 +44,7 @@ class HomeState extends State<Home> {
       builder: (context) => AlertDialog(
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: 'ФИО'),
+          decoration: const InputDecoration(labelText: 'ФИО / Дисциплина'),
         ),
         actions: [
           Row(
@@ -72,7 +72,7 @@ class HomeState extends State<Home> {
   }
 
   Future<void> _deleteUnit(int? id) async {
-    if (id == null) return; // Если id null, не удаляем
+    if (id == null) return;
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

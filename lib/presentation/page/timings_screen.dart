@@ -31,14 +31,14 @@ class TimingsScreenState extends State<TimingsScreen> {
 
   @override
   void dispose() {
-    _loadOperation?.cancel(); // Отменяем загрузку
-    _addOperation?.cancel(); // Отменяем добавление
-    _deleteOperation?.cancel(); // Отменяем удаление
+    _loadOperation?.cancel();
+    _addOperation?.cancel();
+    _deleteOperation?.cancel();
     super.dispose();
   }
 
   Future<void> _loadTimings() async {
-    debugPrint('Start _loadTimings'); // Для отладки: проверьте логи
+    debugPrint('Start _loadTimings');
     _loadOperation = CancelableOperation.fromFuture(
       () async {
         try {
@@ -47,17 +47,17 @@ class TimingsScreenState extends State<TimingsScreen> {
             timingsIterable.where((t) => (t).groupId == widget.group.id),
             key: (t) => (t as Timing).id.toString(),
           );
-          if (!mounted) return; // Проверка перед setState
+          if (!mounted) return;
           setState(() {
             isLoading = false;
           });
-          debugPrint('_loadTimings success'); // Для отладки
+          debugPrint('_loadTimings success');
         } catch (e) {
-          if (!mounted) return; // Проверка перед setState
+          if (!mounted) return;
           setState(() {
             isLoading = false;
           });
-          debugPrint('_loadTimings error: $e'); // Для отладки
+          debugPrint('_loadTimings error: $e');
         }
       }(),
       onCancel: () => debugPrint('_loadTimings cancelled'),
@@ -174,10 +174,7 @@ class TimingsScreenState extends State<TimingsScreen> {
             ),
           );
 
-          // Контроллеры dispose не нужны здесь — они локальные и уничтожаются автоматически
-
           if (result != null && mounted) {
-            // Проверка mounted перед продолжением
             final newTiming = Timing(
               id: null,
               date: result['date'] as DateTime,
@@ -189,19 +186,17 @@ class TimingsScreenState extends State<TimingsScreen> {
             );
             await DB.instance.insert<Timing>(newTiming);
             if (mounted) {
-              // Дополнительная проверка перед _loadTimings
               _loadTimings(); // Перезагрузка
             }
           }
-          debugPrint('_addTiming completed'); // Для отладки
+          debugPrint('_addTiming completed');
         } catch (e) {
           if (mounted) {
-            // Проверка перед показом SnackBar
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Ошибка: $e')),
             );
           }
-          debugPrint('_addTiming error: $e'); // Для отладки
+          debugPrint('_addTiming error: $e');
         }
       }(),
       onCancel: () => debugPrint('_addTiming cancelled'),
@@ -217,17 +212,23 @@ class TimingsScreenState extends State<TimingsScreen> {
         final bool? confirm = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Удалить время ?'),
+            title: const Text(
+                'Удалить время?'),
             content: const Text('Это действие нельзя отменить'),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Отмена'),
-              ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Удалить'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Отмена'),
+                  ),
+                  // УБРАЛ const Spacer() — он вызывает проблему!
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Удалить'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -343,7 +344,6 @@ class TimingsScreenState extends State<TimingsScreen> {
                   const Divider(),
               itemCount: timings.length,
               itemBuilder: (context, index) {
-                // Получаем перевернутый список ключей (последний добавленный — первый)
                 final reversedKeys = timings.keys.toList().reversed.toList();
                 final timingKey = reversedKeys[index];
                 final timing = timings[timingKey]!;
@@ -363,7 +363,6 @@ class TimingsScreenState extends State<TimingsScreen> {
                       )
                     ],
                   ),
-                  //subtitle: Text(timing.description ?? ''),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _deleteTiming(timing.id),

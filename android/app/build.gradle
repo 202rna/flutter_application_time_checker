@@ -11,12 +11,27 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11  // Или VERSION_17
-        targetCompatibility = JavaVersion.VERSION_11  // Или VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    signingConfigs {
+            release {
+                storeFile file("C:\\Users\\rna\\upload-keystore.jks")
+                storePassword '333qqW..'
+                keyAlias 'upload'
+                keyPassword '333qqW..'
+            }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
     }
 
     kotlinOptions {
-        jvmTarget = "11"  // Или "17"
+        jvmTarget = "11"
     }
 
     defaultConfig {

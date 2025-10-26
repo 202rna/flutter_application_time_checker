@@ -67,7 +67,7 @@ class SportyList extends StatelessWidget {
                   children: [
                     Container(
                       width: 10.0,
-                      height: 10.0, // w-8 h-8
+                      height: 10.0,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
@@ -80,14 +80,14 @@ class SportyList extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12.0), // space-x-3
+                    const SizedBox(width: 12.0),
 
                     // Контент (имя)
                     Expanded(
                       child: Text(
                         item.name,
                         style: const TextStyle(
-                          color: Colors.black87, // text-gray-900
+                          color: Colors.black87,
                           fontWeight: FontWeight.w500,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -97,7 +97,6 @@ class SportyList extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => onDelete?.call(item.id),
-                      //tooltip: 'Удалить запись',
                     ),
                   ],
                 ),
