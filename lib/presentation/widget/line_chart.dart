@@ -27,10 +27,6 @@ String _formatDate(DateTime date) {
   return DateFormat('dd.MM').format(date);
 }
 
-String _formatDateWithYear(DateTime date) {
-  return DateFormat('dd.MM.yyyy').format(date);
-}
-
 Widget buildTimingChartScreen(List<Timing> timings) {
   final sortedTimings = List<Timing>.from(timings)
     ..sort((a, b) => a.date.compareTo(b.date));

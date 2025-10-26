@@ -41,6 +41,7 @@ flutter:
     - assets/
     - assets/fonts/
     - assets/images/
+    - assets/screenshots/
 
   fonts:
     - family: Berlin
