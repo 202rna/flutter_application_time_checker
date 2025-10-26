@@ -58,3 +58,10 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icons/app_icon_watch_1024.png"
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  windows:
