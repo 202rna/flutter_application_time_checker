@@ -25,11 +25,11 @@ The application consists of three main components:
   <tr>
     <td align="center" style="padding: 10px;">
       <img src="/assets/screenshots/3.png" alt="LIST" width="300"><br>
-      <b>LIST</b>
+      <b>LIST of time cutoff</b>
     </td>
     <td align="center" style="padding: 10px;">
       <img src="/assets/screenshots/4.png" alt="LIST of time cutoff" width="300"><br>
-      <b>LIST of time cutoff</b>
+      <b>CHART</b>
     </td>
   </tr>
 </table>
